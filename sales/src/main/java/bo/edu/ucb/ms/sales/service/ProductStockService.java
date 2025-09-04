@@ -3,6 +3,7 @@ package bo.edu.ucb.ms.sales.service;
 import java.util.Map;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,8 +18,8 @@ public interface ProductStockService {
     Map<String, String> getProductById(@PathVariable("productId") Integer productId);
 
     @PostMapping("api/stock/decrease")
-    Boolean decreaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
+    ResponseEntity<String> decreaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
 
     @PostMapping("api/stock/increase")
-    Boolean increaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
+    ResponseEntity<String> increaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
 }

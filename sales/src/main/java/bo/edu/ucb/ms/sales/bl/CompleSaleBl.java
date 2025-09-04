@@ -4,6 +4,8 @@ import bo.edu.ucb.ms.sales.entity.Sale;
 import bo.edu.ucb.ms.sales.repository.SaleRepository;
 import bo.edu.ucb.ms.sales.service.ProductStockService;
 import bo.edu.ucb.ms.sales.service.RegisterJournalService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,7 +79,6 @@ public class CompleSaleBl {
         BigDecimal productPrice = new BigDecimal(productMap.get("price"));
         Integer stockQuantity = Integer.parseInt(productMap.get("stockQuantity"));
         
-
         if (stockQuantity < quantity) {
             throw new IllegalArgumentException("Insufficient stock. Available: " + stockQuantity + ", Requested: " + quantity);
         }
@@ -86,16 +87,34 @@ public class CompleSaleBl {
         Sale sale = createSale(productId, productPrice, quantity);
 
         // Disminuye el stock del producto
-        if (!productStockService.decreaseStock(productId, quantity)) {
-            // Delete the sale
+        try {
+            ResponseEntity<String> decreaseStockResponse = productStockService.decreaseStock(productId, quantity);
+            if (!decreaseStockResponse.getStatusCode().is2xxSuccessful()) {
+                saleRepository.delete(sale);
+                throw new IllegalArgumentException("Failed to decrease stock for product ID " + productId);
+            }
+        } catch (Exception e) {
             saleRepository.delete(sale);
             throw new IllegalArgumentException("Failed to decrease stock for product ID " + productId);
         }
 
         // Registra el diario contable
-        if (!registerSaleInJournal(sale, creditAmount)) {
-            // Delete the sale
-            saleRepository.delete(sale);
+        Map<String, Object> saleMap = Map.of(
+            "customerId", sale.getCustomerId(),
+            "amount", sale.getTotalAmount(),
+            "description", "Venta - " + sale.getSaleNumber() + " - Producto ID: " + sale.getProductId(),
+            "createdBy", "SISTEMA_VENTAS",
+            "credit_amount", creditAmount
+            );
+        try {
+            ResponseEntity<String> response = registerJournalService.registerSale(saleMap);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                // saleRepository.delete(sale);
+                productStockService.increaseStock(productId, quantity);
+                throw new IllegalArgumentException("Failed to register sale in journal for sale ID " + sale.getId());
+            }
+        } catch (Exception e) {
+            // saleRepository.delete(sale);
             productStockService.increaseStock(productId, quantity);
             throw new IllegalArgumentException("Failed to register sale in journal for sale ID " + sale.getId());
         }
@@ -111,7 +130,7 @@ public class CompleSaleBl {
      * @param sale The sale to register in the journal
      */
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    private Boolean registerSaleInJournal(Sale sale, BigDecimal creditAmount) {
+    private ResponseEntity<String> registerSaleInJournal(Sale sale, BigDecimal creditAmount) {
 
         Map<String, Object> saleMap = Map.of(
             "customerId", sale.getCustomerId(),
@@ -120,7 +139,16 @@ public class CompleSaleBl {
             "createdBy", "SISTEMA_VENTAS",
             "credit_amount", creditAmount
         );
-        return registerJournalService.registerSale(saleMap);
+        try {
+            ResponseEntity<String> response = registerJournalService.registerSale(saleMap);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new IllegalArgumentException("Failed to register sale in journal for sale ID " + sale.getId());
+            }
+            return response;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to register sale in journal for sale ID " + sale.getId());
+        }
+
         // // Constants for account codes and names
         // final String ACCOUNTS_RECEIVABLE_CODE = "1200";
         // final String ACCOUNTS_RECEIVABLE_NAME = "Cuentas por Cobrar";
