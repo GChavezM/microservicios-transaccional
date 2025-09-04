@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "accounting")
 public interface RegisterJournalService {
     @PostMapping("api/journal/sale")
-    void registerSale(Map<String, Object> saleData);
+    Boolean registerSale(Map<String, Object> saleData);
 }

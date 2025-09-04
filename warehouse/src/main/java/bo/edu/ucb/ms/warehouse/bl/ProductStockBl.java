@@ -69,5 +69,14 @@ public class ProductStockBl {
         product.setStockQuantity(product.getStockQuantity() - quantity);
         return productRepository.save(product);
     }
-    
+
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public Product increaseStock(Integer productId, Integer quantity) {
+        Product product = getProductById(productId);
+        if (product == null) {
+            throw new IllegalArgumentException("Product with ID " + productId + " not found");
+        }
+        product.setStockQuantity(product.getStockQuantity() + quantity);
+        return productRepository.save(product);
+    }
 }

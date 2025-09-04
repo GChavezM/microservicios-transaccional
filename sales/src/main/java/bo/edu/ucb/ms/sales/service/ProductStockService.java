@@ -17,5 +17,8 @@ public interface ProductStockService {
     Map<String, String> getProductById(@PathVariable("productId") Integer productId);
 
     @PostMapping("api/stock/decrease")
-    void decreaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
+    Boolean decreaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
+
+    @PostMapping("api/stock/increase")
+    Boolean increaseStock(@RequestParam("productId") Integer productId, @RequestParam("quantity") Integer quantity);
 }

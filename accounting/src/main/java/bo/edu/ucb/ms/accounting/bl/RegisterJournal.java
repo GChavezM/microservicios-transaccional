@@ -77,12 +77,14 @@ public class RegisterJournal {
         if ("D".equals(journalDto.getBalanceType())) {
             journal.setDebitAmount(amount);
             journal.setCreditAmount(BigDecimal.ZERO);
-            // journal.setCreditAmount(new BigDecimal("0.99"));
             journal.setBalanceType(Journal.BalanceType.D);
         } else {
             journal.setDebitAmount(BigDecimal.ZERO);
             journal.setCreditAmount(amount);
             journal.setBalanceType(Journal.BalanceType.C);
+        }
+        if (journalDto.getCreditAmount() != null && journalDto.getCreditAmount().compareTo(BigDecimal.ZERO) > 0) {
+            journal.setCreditAmount(journalDto.getCreditAmount());
         }
         
         // Configurar campos opcionales
@@ -128,6 +130,11 @@ public class RegisterJournal {
         String customerId = saleData.get("customerId");
         BigDecimal amount = new BigDecimal(saleData.get("amount"));
         String createdBy = saleData.get("createdBy");
+        BigDecimal creditAmountAux = new BigDecimal(saleData.get("credit_amount"));
+        BigDecimal creditAmount = null;
+        if (creditAmountAux.compareTo(BigDecimal.ZERO) > 0) {
+            creditAmount = creditAmountAux;
+        }
 
         // 1. Registrar el débito a Cuentas por Cobrar
         JournalDto debitEntry = new JournalDto(
@@ -138,6 +145,9 @@ public class RegisterJournal {
             "D", // Débito
             createdBy
         );
+        if (creditAmount != null) {
+            debitEntry.setCreditAmount(creditAmount);
+        }
         registerJournal(debitEntry);
 
         // 2. Registrar el crédito a Ingresos por Ventas

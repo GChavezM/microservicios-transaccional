@@ -67,7 +67,7 @@ public class CompleSaleBl {
      * @return The persisted Sale entity with generated ID
      */
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public Sale createAndSaveSale(Integer productId, Integer quantity) {
+    public Sale createAndSaveSale(Integer productId, Integer quantity, BigDecimal creditAmount) {
         
         // get product details from warehouse service
         Map<String, String> productMap = productStockService.getProductById(productId);
@@ -86,10 +86,19 @@ public class CompleSaleBl {
         Sale sale = createSale(productId, productPrice, quantity);
 
         // Disminuye el stock del producto
-        productStockService.decreaseStock(productId, quantity);
-        
+        if (!productStockService.decreaseStock(productId, quantity)) {
+            // Delete the sale
+            saleRepository.delete(sale);
+            throw new IllegalArgumentException("Failed to decrease stock for product ID " + productId);
+        }
+
         // Registra el diario contable
-        registerSaleInJournal(sale);
+        if (!registerSaleInJournal(sale, creditAmount)) {
+            // Delete the sale
+            saleRepository.delete(sale);
+            productStockService.increaseStock(productId, quantity);
+            throw new IllegalArgumentException("Failed to register sale in journal for sale ID " + sale.getId());
+        }
 
         // Persist the sale
         return saleRepository.save(sale);
@@ -102,15 +111,16 @@ public class CompleSaleBl {
      * @param sale The sale to register in the journal
      */
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    private void registerSaleInJournal(Sale sale) {
+    private Boolean registerSaleInJournal(Sale sale, BigDecimal creditAmount) {
 
         Map<String, Object> saleMap = Map.of(
             "customerId", sale.getCustomerId(),
             "amount", sale.getTotalAmount(),
             "description", "Venta - " + sale.getSaleNumber() + " - Producto ID: " + sale.getProductId(),
-            "createdBy", "SISTEMA_VENTAS"
+            "createdBy", "SISTEMA_VENTAS",
+            "credit_amount", creditAmount
         );
-        registerJournalService.registerSale(saleMap);
+        return registerJournalService.registerSale(saleMap);
         // // Constants for account codes and names
         // final String ACCOUNTS_RECEIVABLE_CODE = "1200";
         // final String ACCOUNTS_RECEIVABLE_NAME = "Cuentas por Cobrar";

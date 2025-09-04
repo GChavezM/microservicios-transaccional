@@ -9,6 +9,7 @@ public class JournalDto {
     private String accountName;
     private String description;
     private BigDecimal amount;
+    private BigDecimal creditAmount;
     private String balanceType; // "D" for Debit, "C" for Credit
     private LocalDate transactionDate;
     private String referenceNumber;
@@ -63,6 +64,15 @@ public class JournalDto {
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
+
+    public BigDecimal getCreditAmount() {
+        return creditAmount;
+    }
+
+    public void setCreditAmount(BigDecimal creditAmount) {
+        this.creditAmount = creditAmount;
+    }
+    
     
     public String getBalanceType() {
         return balanceType;
@@ -127,6 +137,7 @@ public class JournalDto {
                 ", accountName='" + accountName + '\'' +
                 ", description='" + description + '\'' +
                 ", amount=" + amount +
+                ", creditAmount=" + creditAmount +
                 ", balanceType='" + balanceType + '\'' +
                 ", transactionDate=" + transactionDate +
                 ", createdBy='" + createdBy + '\'' +

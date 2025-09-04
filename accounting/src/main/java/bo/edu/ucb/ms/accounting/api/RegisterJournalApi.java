@@ -19,8 +19,12 @@ public class RegisterJournalApi {
     private RegisterJournal registerJournal;
 
     @PostMapping("/sale")
-    public ResponseEntity<Void> registerSale(@RequestBody Map<String, String> saleData) {
-        registerJournal.registerSale(saleData);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Boolean> registerSale(@RequestBody Map<String, String> saleData) {
+        try {
+            registerJournal.registerSale(saleData);
+            return ResponseEntity.ok(true);
+        } catch (Exception e) {
+            return ResponseEntity.ok(false);
+        }
     }
 }

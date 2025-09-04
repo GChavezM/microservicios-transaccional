@@ -1,5 +1,7 @@
 package bo.edu.ucb.ms.sales.api;
 
+import java.math.BigDecimal;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,9 +26,10 @@ public class SaleApi {
 
     @PostMapping
     public ResponseEntity<SaleDto> createSale(@RequestParam Integer productId, 
-                                             @RequestParam(defaultValue = "1") Integer quantity) {
+                                             @RequestParam(defaultValue = "1") Integer quantity,
+                                             @RequestParam(defaultValue = "0.0") BigDecimal creditAmount) {
         // Create and save the sale using the business logic
-        Sale savedSale = compleSaleBl.createAndSaveSale(productId, quantity);
+        Sale savedSale = compleSaleBl.createAndSaveSale(productId, quantity, creditAmount);
         
         // Convert Sale entity to SaleDto
         SaleDto saleDto = convertToDto(savedSale);

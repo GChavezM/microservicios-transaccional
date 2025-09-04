@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import bo.edu.ucb.ms.warehouse.bl.ProductStockBl;
-import bo.edu.ucb.ms.warehouse.entity.Product;
 
 @RestController
 @RequestMapping("/api/stock")
@@ -28,14 +27,26 @@ public class ProductStockApi {
     }
 
     @PostMapping("/decrease")
-    public ResponseEntity<Product> decreaseStock(
+    public ResponseEntity<Boolean> decreaseStock(
             @RequestParam("productId") Integer productId,
             @RequestParam("quantity") Integer quantity) {
         try {
-            Product updatedProduct = productStockBl.decreaseStock(productId, quantity);
-            return ResponseEntity.ok(updatedProduct);
+            productStockBl.decreaseStock(productId, quantity);
+            return ResponseEntity.ok(true);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.ok(false);
+        }
+    }
+
+    @PostMapping("/increase")
+    public ResponseEntity<Boolean> increaseStock(
+            @RequestParam("productId") Integer productId,
+            @RequestParam("quantity") Integer quantity) {
+        try {
+            productStockBl.increaseStock(productId, quantity);
+            return ResponseEntity.ok(true);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(false);
         }
     }
 }
